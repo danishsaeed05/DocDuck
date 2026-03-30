@@ -43,6 +43,7 @@ export interface Message {
   timestamp: string;
   isRead: boolean;
   type?: 'appointment' | 'general';
+  isConfirmed?: boolean;
 }
 
 export interface PatientData {

@@ -14,8 +14,14 @@ const DoctorDashboard: React.FC = () => {
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
     setIsSending(true);
+    
+    // Detect if this is an appointment message
+    const isAppointment = messageText.toLowerCase().includes('schedule') || 
+                          messageText.toLowerCase().includes('consult') || 
+                          messageText.toLowerCase().includes('appointment');
+    
     try {
-      await sendMessage(messageText);
+      await sendMessage(messageText, isAppointment ? 'appointment' : 'general');
       toast.success('Message sent successfully');
       setMessageText('');
       setIsMessageModalOpen(false);

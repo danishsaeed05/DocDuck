@@ -183,6 +183,37 @@ async function startServer() {
     }
   });
 
+  // API endpoint to confirm an appointment message
+  app.post('/api/confirm-appointment', (req, res) => {
+    const { messageId } = req.body;
+    const messagesFile = path.join(process.cwd(), 'public', 'messages.json');
+    
+    if (fs.existsSync(messagesFile)) {
+      try {
+        const fileContent = fs.readFileSync(messagesFile, 'utf8');
+        let messages = JSON.parse(fileContent);
+        messages = messages.map((m: any) => 
+          m.id === messageId ? { ...m, isConfirmed: true } : m
+        );
+        fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
+        
+        // Broadcast to all connected clients
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'APPOINTMENT_CONFIRMED', data: { messageId } }));
+          }
+        });
+
+        res.json({ status: 'ok', message: 'Appointment confirmed' });
+      } catch (e) {
+        console.error('Error updating messages file:', e);
+        res.status(500).json({ status: 'error', message: 'Failed to confirm appointment' });
+      }
+    } else {
+      res.status(404).json({ status: 'error', message: 'Messages file not found' });
+    }
+  });
+
   // API endpoint to get messages
   app.get('/api/get-messages', (req, res) => {
     const messagesFile = path.join(process.cwd(), 'public', 'messages.json');

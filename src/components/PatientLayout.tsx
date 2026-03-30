@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useData } from '../data/dataStore';
+import { motion, AnimatePresence } from 'motion/react';
 
 const PatientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const { messages, markMessagesAsRead } = useData();
+  const { messages, markMessagesAsRead, confirmAppointment } = useData();
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState<string | null>(null);
 
   const isHowIFeel = location.pathname.startsWith('/how-i-feel');
   const isDashboard = location.pathname === '/dashboard';
@@ -17,6 +20,18 @@ const PatientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       markMessagesAsRead();
     }
     setIsMessagesOpen(!isMessagesOpen);
+  };
+
+  const handleConfirm = async (id: string) => {
+    setConfirmingId(id);
+    // 10 second delay as requested
+    setTimeout(async () => {
+      await confirmAppointment(id);
+      setConfirmingId(null);
+      setShowSuccess(id);
+      // Show success for 3 seconds
+      setTimeout(() => setShowSuccess(null), 3000);
+    }, 3000);
   };
 
   return (
@@ -76,6 +91,41 @@ const PatientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         <p className="text-xs text-on-surface font-medium leading-relaxed">
                           {msg.text}
                         </p>
+                        
+                        {(msg.type === 'appointment' || msg.text.toLowerCase().includes('schedule') || msg.text.toLowerCase().includes('consult')) && (
+                          <div className="mt-3">
+                            {msg.isConfirmed ? (
+                              <div className="flex items-center gap-2 text-green-600 font-bold text-[10px] uppercase">
+                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                Appointment Confirmed
+                              </div>
+                            ) : confirmingId === msg.id ? (
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase animate-pulse">
+                                  <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                  We are with you every step of the way...
+                                </div>
+                              </div>
+                            ) : showSuccess === msg.id ? (
+                              <motion.div 
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="flex items-center gap-2 text-green-600 font-bold text-[10px] uppercase"
+                              >
+                                <span className="material-symbols-outlined text-sm">check_circle</span>
+                                Appointment Confirmed!
+                              </motion.div>
+                            ) : (
+                              <button 
+                                onClick={() => handleConfirm(msg.id)}
+                                className="flex items-center gap-2 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full hover:bg-primary-dark transition-all shadow-sm"
+                              >
+                                <span className="material-symbols-outlined text-sm">check</span>
+                                Confirm Appointment
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (

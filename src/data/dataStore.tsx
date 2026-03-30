@@ -9,6 +9,7 @@ interface DataContextType {
   addLog: (log: Omit<PatientLog, 'id'>) => Promise<void>;
   sendMessage: (text: string, type?: 'appointment' | 'general') => Promise<void>;
   markMessagesAsRead: () => Promise<void>;
+  confirmAppointment: (messageId: string) => Promise<void>;
   clearLogs: () => void;
   isWsConnected: boolean;
 }
@@ -17,6 +18,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const processedIds = React.useRef<Set<string>>(new Set());
+  const processedMessageIds = React.useRef<Set<string>>(new Set());
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [patientData, setPatientData] = useState<PatientData>(() => {
@@ -175,16 +177,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Notification for patient portal
             const isPatientPortal = !window.location.pathname.startsWith('/doctor');
             if (isPatientPortal && newMessage.sender === 'Doctor') {
-              toast.info('New Message from Doctor', {
-                description: newMessage.text,
-                duration: 5000,
-              });
-              const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-              audio.volume = 0.4;
-              audio.play().catch(e => console.warn('Chime audio blocked:', e));
+              if (!processedMessageIds.current.has(newMessage.id)) {
+                processedMessageIds.current.add(newMessage.id);
+                toast.info('New Message from Doctor', {
+                  description: newMessage.text,
+                  duration: 5000,
+                });
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.volume = 0.4;
+                audio.play().catch(e => console.warn('Chime audio blocked:', e));
+              }
             }
           } else if (message.type === 'MESSAGES_READ') {
             setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
+          } else if (message.type === 'APPOINTMENT_CONFIRMED') {
+            const { messageId } = message.data;
+            setMessages(prev => prev.map(m => 
+              m.id === messageId ? { ...m, isConfirmed: true } : m
+            ));
           }
         } catch (e) {
           console.error('Error parsing WebSocket message:', e);
@@ -288,6 +298,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const confirmAppointment = async (messageId: string) => {
+    try {
+      const response = await fetch('/api/confirm-appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId })
+      });
+      if (!response.ok) throw new Error('Failed to confirm appointment');
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+      toast.error('Failed to confirm appointment');
+    }
+  };
+
   return (
     <DataContext.Provider value={{ 
       patientData, 
@@ -295,6 +319,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addLog, 
       sendMessage, 
       markMessagesAsRead, 
+      confirmAppointment,
       clearLogs, 
       isWsConnected 
     }}>
