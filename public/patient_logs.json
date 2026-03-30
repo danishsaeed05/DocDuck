@@ -1,23 +1,5 @@
 [
   {
-    "id": "log-1",
-    "date": "OCT 24",
-    "time": "08:00 AM",
-    "mood": "Exhausted",
-    "symptoms": [
-      "Headache",
-      "Nausea",
-      "Racing Heart"
-    ],
-    "flaggedBodyParts": [
-      "Upper Chest",
-      "Abdomen"
-    ],
-    "sleepDuration": "4h 12m",
-    "journalNote": "Woke up feeling very lightheaded. My chest felt tight like a band was around it. Tried to eat toast but felt too sick to finish. Spent most of the morning in the dark.",
-    "riskLevel": "High"
-  },
-  {
     "id": "log-2",
     "date": "OCT 23",
     "time": "09:00 AM",

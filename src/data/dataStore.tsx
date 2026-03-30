@@ -234,7 +234,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const riskLevel = isSevere(journalText) ? 'High' : 'Stable';
     
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
     const newLog: PatientLog = {

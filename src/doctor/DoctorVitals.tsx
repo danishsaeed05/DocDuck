@@ -53,16 +53,45 @@ const DoctorVitals: React.FC = () => {
 
   // Prepare Heart Rate data with log overlays for the selected date
   const hrData = useMemo(() => {
-    return (patientData.biometrics?.heartRateSeries || [])
-      .filter(point => !point.date || point.date === selectedDate)
-      .map(point => {
-        // Find if there's a log at this specific hour on the selected date
-        const logAtTime = patientData.logs.find(log => log.time === point.time && log.date === selectedDate);
-        return {
-          ...point,
-          log: logAtTime
-        };
+    if (!selectedDate) return [];
+
+    // Filter heart rate series for the selected date (case-insensitive)
+    let filteredSeries = (patientData.biometrics?.heartRateSeries || [])
+      .filter(point => {
+        if (!point.date) return true; // Keep points without dates (legacy or current day)
+        return point.date.toUpperCase() === selectedDate.toUpperCase();
       });
+
+    // Fallback: If no series data for this date, but we have logs, generate dummy points from logs
+    if (filteredSeries.length === 0) {
+      const logsForDate = patientData.logs.filter(l => 
+        l.date && l.date.toUpperCase() === selectedDate.toUpperCase()
+      );
+      
+      if (logsForDate.length > 0) {
+        // Create points from logs so the graph isn't empty
+        filteredSeries = logsForDate.map(log => ({
+          time: log.time,
+          bpm: log.riskLevel === 'High' ? 135 : 72,
+          date: log.date
+        })).sort((a, b) => {
+          // Sort by time within the day
+          return new Date(`2000/01/01 ${a.time}`).getTime() - new Date(`2000/01/01 ${b.time}`).getTime();
+        });
+      }
+    }
+
+    return filteredSeries.map(point => {
+      // Find if there's a log at this specific hour on the selected date
+      const logAtTime = patientData.logs.find(log => 
+        log.time === point.time && 
+        log.date && log.date.toUpperCase() === selectedDate.toUpperCase()
+      );
+      return {
+        ...point,
+        log: logAtTime
+      };
+    });
   }, [patientData, selectedDate]);
 
   const CustomTooltip = ({ active, payload }: any) => {
