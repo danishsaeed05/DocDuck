@@ -1,0 +1,50 @@
+[
+  {
+    "id": "log-1",
+    "date": "OCT 24",
+    "time": "08:00 AM",
+    "mood": "Exhausted",
+    "symptoms": [
+      "Headache",
+      "Nausea",
+      "Racing Heart"
+    ],
+    "flaggedBodyParts": [
+      "Upper Chest",
+      "Abdomen"
+    ],
+    "sleepDuration": "4h 12m",
+    "journalNote": "Woke up feeling very lightheaded. My chest felt tight like a band was around it. Tried to eat toast but felt too sick to finish. Spent most of the morning in the dark.",
+    "riskLevel": "High"
+  },
+  {
+    "id": "log-2",
+    "date": "OCT 23",
+    "time": "09:00 AM",
+    "mood": "Energized",
+    "symptoms": [
+      "Mild Fatigue"
+    ],
+    "flaggedBodyParts": [],
+    "sleepDuration": "8h 45m",
+    "journalNote": "Actually had a good night! Went to the park for a bit with my sister. My stomach felt fine all day today.",
+    "riskLevel": "Stable"
+  },
+  {
+    "id": "log-3",
+    "date": "OCT 22",
+    "time": "11:00 PM",
+    "mood": "Moderate",
+    "symptoms": [
+      "Headache",
+      "Joint Pain"
+    ],
+    "flaggedBodyParts": [
+      "Right Knee",
+      "Left Shoulder"
+    ],
+    "sleepDuration": "6h 20m",
+    "journalNote": "Knee started acting up after walking to school. Headache is dull but annoying. Took some Tylenol at 4pm.",
+    "riskLevel": "Moderate"
+  }
+]
