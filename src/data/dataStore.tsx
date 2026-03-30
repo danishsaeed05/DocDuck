@@ -126,12 +126,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (isDoctorPortal) {
               console.log(`Processing new log for Doctor Portal. Risk Level: ${newLog.riskLevel}, Is High Risk: ${isHighRisk}`);
 
+              const toastOptions = {
+                id: newLog.id,
+                description: `Severe entry: "${newLog.journal || newLog.journalNote || 'No note'}"`,
+                duration: 10000,
+                action: {
+                  label: 'View Log',
+                  onClick: () => {
+                    window.location.href = `/doctor/logs?id=${newLog.id}`;
+                  }
+                }
+              };
+
               if (isHighRisk) {
-                toast.error('EMERGENCY ALERT', {
-                  id: newLog.id, // Use log ID to deduplicate toasts
-                  description: `Severe entry: "${newLog.journal || newLog.journalNote || 'No note'}"`,
-                  duration: 10000,
-                });
+                toast.error('EMERGENCY ALERT', toastOptions);
                 
                 console.log('Attempting to play EMERGENCY siren...');
                 const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3');
@@ -139,8 +147,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 audio.play().catch(e => console.warn('Emergency audio blocked:', e));
               } else {
                 toast.info('New Patient Log', {
-                  id: newLog.id, // Use log ID to deduplicate toasts
-                  description: `A new log entry has been received.`,
+                  ...toastOptions,
+                  description: 'A new log entry has been received.',
                   duration: 5000,
                 });
                 
@@ -225,17 +233,48 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const journalText = log.journal || log.journalNote;
     const riskLevel = isSevere(journalText) ? 'High' : 'Stable';
     
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
     const newLog: PatientLog = {
       ...log,
       id: `log-${Date.now()}`,
+      date: dateStr,
+      time: timeStr,
       riskLevel
     };
     
+    // Generate a randomized heart rate point for this log
+    const baseBpm = riskLevel === 'High' ? 135 : 72; // Increased high BPM for better visibility
+    const variance = riskLevel === 'High' ? 15 : 8;
+    const newBpm = Math.floor(baseBpm + (Math.random() * variance * 2) - variance);
+    
+    const newHeartRatePoint = {
+      time: timeStr,
+      bpm: newBpm,
+      date: dateStr
+    };
+
     // Update local state
-    setPatientData(prev => ({
-      ...prev,
-      logs: [newLog, ...prev.logs]
-    }));
+    setPatientData(prev => {
+      const updatedLogs = [newLog, ...prev.logs];
+      const updatedHeartRateSeries = [...prev.biometrics.heartRateSeries, newHeartRatePoint];
+      
+      // Keep only last 24 points for the series to prevent bloat
+      const trimmedSeries = updatedHeartRateSeries.slice(-24);
+      
+      return {
+        ...prev,
+        logs: updatedLogs,
+        biometrics: {
+          ...prev.biometrics,
+          heartRate: newBpm, // Update current heart rate to the latest reading
+          heartRateSeries: trimmedSeries,
+          lastSync: 'Just now'
+        }
+      };
+    });
 
     // Save to server-side JSON file
     try {

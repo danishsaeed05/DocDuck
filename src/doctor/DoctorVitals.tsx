@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../data/dataStore';
 import { 
   LineChart, 
@@ -28,13 +28,28 @@ const DoctorVitals: React.FC = () => {
     patientData.biometrics.heartRateSeries.forEach(point => {
       if (point.date) dates.add(point.date);
     });
+    
     return Array.from(dates).sort((a, b) => {
-      // Simple sort for OCT dates, could be more robust
-      return b.localeCompare(a); 
+      // Robust date sorting
+      const dateA = new Date(a).getTime();
+      const dateB = new Date(b).getTime();
+      
+      // If parsing fails (e.g. "OCT 24" without year), fallback to simple comparison
+      if (isNaN(dateA) || isNaN(dateB)) {
+        return b.localeCompare(a);
+      }
+      return dateB - dateA; // Descending order (newest first)
     });
   }, [patientData]);
 
-  const [selectedDate, setSelectedDate] = useState<string>(availableDates[0] || 'OCT 24');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
+  // Sync selectedDate with availableDates
+  useEffect(() => {
+    if (availableDates.length > 0 && !selectedDate) {
+      setSelectedDate(availableDates[0]);
+    }
+  }, [availableDates, selectedDate]);
 
   // Prepare Heart Rate data with log overlays for the selected date
   const hrData = useMemo(() => {

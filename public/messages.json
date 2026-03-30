@@ -1,0 +1,34 @@
+[
+  {
+    "id": "msg-1",
+    "sender": "Doctor",
+    "text": "Hi Maya, I noticed some spikes in your heart rate. Let's discuss this in our next consult.",
+    "timestamp": "2026-03-29T10:00:00Z",
+    "isRead": true,
+    "type": "appointment"
+  },
+  {
+    "id": "msg-1774842849340",
+    "sender": "Doctor",
+    "text": "Hi Maya, I've reviewed your recent logs. Let's schedule a quick video consult to discuss the heart rate spikes.",
+    "timestamp": "2026-03-30T03:54:09.340Z",
+    "isRead": true,
+    "type": "appointment"
+  },
+  {
+    "id": "msg-1774842875557",
+    "sender": "Doctor",
+    "text": "lol",
+    "timestamp": "2026-03-30T03:54:35.557Z",
+    "isRead": true,
+    "type": "general"
+  },
+  {
+    "id": "msg-1774843020829",
+    "sender": "Doctor",
+    "text": "Hi Maya, I've reviewed your recent logs. Let's schedule a quick video consult to discuss the heart rate spikes.",
+    "timestamp": "2026-03-30T03:57:00.829Z",
+    "isRead": true,
+    "type": "appointment"
+  }
+]

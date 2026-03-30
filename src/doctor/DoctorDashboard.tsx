@@ -76,28 +76,22 @@ const DoctorDashboard: React.FC = () => {
         <div className="flex gap-3">
           <button 
             onClick={() => triggerTestAlert(false)}
-            disabled={!isWsConnected}
-            className={`px-4 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all ${
-              isWsConnected 
-                ? 'bg-surface-container-lowest text-secondary hover:bg-surface-container' 
-                : 'bg-surface-container-low text-slate-400 cursor-not-allowed opacity-70'
+            className={`px-4 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all bg-surface-container-lowest text-secondary hover:bg-surface-container ${
+              !isWsConnected ? 'opacity-70' : ''
             }`}
           >
-            <span className={`material-symbols-outlined ${!isWsConnected ? 'animate-spin' : ''}`}>
+            <span className={`material-symbols-outlined ${!isWsConnected ? 'animate-pulse text-slate-400' : ''}`}>
               {isWsConnected ? 'notifications' : 'sync'}
             </span>
             {isWsConnected ? 'Test Chime' : 'Connecting...'}
           </button>
           <button 
             onClick={() => triggerTestAlert(true)}
-            disabled={!isWsConnected}
-            className={`px-4 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all ${
-              isWsConnected 
-                ? 'bg-surface-container-lowest text-error hover:bg-surface-container' 
-                : 'bg-surface-container-low text-slate-400 cursor-not-allowed opacity-70'
+            className={`px-4 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all bg-surface-container-lowest text-error hover:bg-surface-container ${
+              !isWsConnected ? 'opacity-70' : ''
             }`}
           >
-            <span className={`material-symbols-outlined ${!isWsConnected ? 'animate-spin' : ''}`}>
+            <span className={`material-symbols-outlined ${!isWsConnected ? 'animate-pulse text-slate-400' : ''}`}>
               {isWsConnected ? 'emergency' : 'sync'}
             </span>
             {isWsConnected ? 'Test Siren' : 'Connecting...'}
