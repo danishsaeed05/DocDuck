@@ -4,20 +4,31 @@ import AppLoader from './AppLoader';
 
 export default function DataExplorer() {
   const [logs, setLogs] = useState<any[]>([]);
+  const [hrSeries, setHrSeries] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'logs' | 'hr'>('logs');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedLogs, setEditedLogs] = useState('');
+  const [editedContent, setEditedContent] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const fetchLogs = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/get-logs');
-      if (!response.ok) throw new Error('Failed to fetch logs');
-      const data = await response.json();
-      setLogs(data);
-      setEditedLogs(JSON.stringify(data, null, 2));
+      const [logsRes, hrRes] = await Promise.all([
+        fetch('/api/get-logs'),
+        fetch('/api/get-heart-rate')
+      ]);
+      
+      if (!logsRes.ok || !hrRes.ok) throw new Error('Failed to fetch data');
+      
+      const logsData = await logsRes.json();
+      const hrData = await hrRes.json();
+      
+      setLogs(logsData);
+      setHrSeries(hrData);
+      
+      setEditedContent(JSON.stringify(activeTab === 'logs' ? logsData : hrData, null, 2));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -26,20 +37,30 @@ export default function DataExplorer() {
   };
 
   useEffect(() => {
-    fetchLogs();
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    setEditedContent(JSON.stringify(activeTab === 'logs' ? logs : hrSeries, null, 2));
+  }, [activeTab, logs, hrSeries]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const parsedLogs = JSON.parse(editedLogs);
-      const response = await fetch('/api/update-logs', {
+      const parsedData = JSON.parse(editedContent);
+      const endpoint = activeTab === 'logs' ? '/api/update-logs' : '/api/save-heart-rate';
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsedLogs),
+        body: JSON.stringify(parsedData),
       });
-      if (!response.ok) throw new Error('Failed to update logs');
-      setLogs(parsedLogs);
+      
+      if (!response.ok) throw new Error('Failed to update data');
+      
+      if (activeTab === 'logs') setLogs(parsedData);
+      else setHrSeries(parsedData);
+      
       setIsEditing(false);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Invalid JSON format');
@@ -49,10 +70,12 @@ export default function DataExplorer() {
   };
 
   const downloadJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
+    const data = activeTab === 'logs' ? logs : hrSeries;
+    const filename = activeTab === 'logs' ? 'patient_logs.json' : 'heart_rate_series.json';
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "patient_logs.json");
+    downloadAnchorNode.setAttribute("download", filename);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -63,7 +86,7 @@ export default function DataExplorer() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-headline font-extrabold text-on-surface">Data Explorer</h2>
-          <p className="text-on-surface-variant text-sm mt-1">View and edit your raw log data.</p>
+          <p className="text-on-surface-variant text-sm mt-1">View and edit your raw data files.</p>
         </div>
         <div className="flex gap-3">
           {!isEditing ? (
@@ -86,7 +109,7 @@ export default function DataExplorer() {
           ) : (
             <>
               <button 
-                onClick={() => { setIsEditing(false); setEditedLogs(JSON.stringify(logs, null, 2)); }}
+                onClick={() => { setIsEditing(false); setEditedContent(JSON.stringify(activeTab === 'logs' ? logs : hrSeries, null, 2)); }}
                 className="bg-surface-container-highest text-on-surface px-6 py-2 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all"
               >
                 Cancel
@@ -102,6 +125,23 @@ export default function DataExplorer() {
             </>
           )}
         </div>
+      </div>
+
+      <div className="flex gap-4 mb-6">
+        <button 
+          onClick={() => !isEditing && setActiveTab('logs')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'logs' ? 'bg-primary text-white' : 'bg-surface-container text-on-surface hover:bg-surface-container-highest'}`}
+          disabled={isEditing}
+        >
+          Patient Logs
+        </button>
+        <button 
+          onClick={() => !isEditing && setActiveTab('hr')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'hr' ? 'bg-primary text-white' : 'bg-surface-container text-on-surface hover:bg-surface-container-highest'}`}
+          disabled={isEditing}
+        >
+          Heart Rate Series
+        </button>
       </div>
 
       {loading ? (
@@ -121,20 +161,20 @@ export default function DataExplorer() {
               <div className="w-8 h-8 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary">
                 <span className="material-symbols-outlined text-sm">database</span>
               </div>
-              <h3 className="font-bold text-on-surface">Raw patient_logs.json</h3>
+              <h3 className="font-bold text-on-surface">Raw {activeTab === 'logs' ? 'patient_logs.json' : 'heart_rate_series.json'}</h3>
             </div>
             <div className="bg-surface-container rounded-xl p-4 overflow-hidden">
               {isEditing ? (
                 <textarea
-                  value={editedLogs}
-                  onChange={(e) => setEditedLogs(e.target.value)}
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
                   className="w-full h-[500px] bg-transparent text-xs font-mono text-on-surface-variant leading-relaxed outline-none resize-none"
                   spellCheck={false}
                 />
               ) : (
                 <div className="max-h-[600px] overflow-auto">
                   <pre className="text-xs font-mono text-on-surface-variant leading-relaxed">
-                    {JSON.stringify(logs, null, 2)}
+                    {JSON.stringify(activeTab === 'logs' ? logs : hrSeries, null, 2)}
                   </pre>
                 </div>
               )}
@@ -147,7 +187,7 @@ export default function DataExplorer() {
               About your data
             </h4>
             <p className="text-sm text-on-primary-container/80 leading-relaxed">
-              This data is stored on the server in a file named <code className="bg-white/50 px-1 rounded">patient_logs.json</code>. 
+              This data is stored on the server in <code className="bg-white/50 px-1 rounded">{activeTab === 'logs' ? 'patient_logs.json' : 'heart_rate_series.json'}</code>. 
               {isEditing ? 'Editing this JSON directly allows you to correct errors or manually add data.' : 'You can edit this data directly by clicking the "Edit JSON" button above.'}
             </p>
           </div>

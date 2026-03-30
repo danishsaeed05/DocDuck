@@ -48,6 +48,65 @@ async function startServer() {
     });
   });
 
+  // API endpoint to save heart rate series to a JSON file
+  app.post('/api/save-heart-rate', (req, res) => {
+    const hrData = req.body; // Expecting an array of HeartRatePoint
+    const hrFile = path.join(process.cwd(), 'public', 'heart_rate_series.json');
+    
+    let existingHR = [];
+    if (fs.existsSync(hrFile)) {
+      try {
+        const fileContent = fs.readFileSync(hrFile, 'utf8');
+        existingHR = JSON.parse(fileContent);
+      } catch (e) {
+        console.error('Error reading HR file:', e);
+      }
+    }
+
+    // Merge new data, avoiding duplicates for the same date/time
+    const mergedHR = [...existingHR];
+    hrData.forEach((newPoint: any) => {
+      const index = mergedHR.findIndex(p => p.date === newPoint.date && p.time === newPoint.time);
+      if (index !== -1) {
+        mergedHR[index] = newPoint;
+      } else {
+        mergedHR.push(newPoint);
+      }
+    });
+
+    try {
+      fs.writeFileSync(hrFile, JSON.stringify(mergedHR, null, 2));
+      
+      // Broadcast to all connected clients
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ type: 'HR_UPDATED', data: mergedHR }));
+        }
+      });
+
+      res.json({ status: 'ok', message: 'Heart rate data saved successfully' });
+    } catch (e) {
+      console.error('Error writing HR file:', e);
+      res.status(500).json({ status: 'error', message: 'Failed to save heart rate data' });
+    }
+  });
+
+  // API endpoint to get heart rate series
+  app.get('/api/get-heart-rate', (req, res) => {
+    const hrFile = path.join(process.cwd(), 'public', 'heart_rate_series.json');
+    if (fs.existsSync(hrFile)) {
+      try {
+        const fileContent = fs.readFileSync(hrFile, 'utf8');
+        res.json(JSON.parse(fileContent));
+      } catch (e) {
+        console.error('Error reading HR file:', e);
+        res.status(500).json({ status: 'error', message: 'Failed to read heart rate data' });
+      }
+    } else {
+      res.json([]);
+    }
+  });
+
   // API endpoint to save logs to a JSON file
   app.post('/api/save-log', (req, res) => {
     const logData = req.body;

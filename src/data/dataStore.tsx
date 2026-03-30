@@ -60,6 +60,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const fetchHR = async () => {
+    try {
+      const response = await fetch('/api/get-heart-rate');
+      if (response.ok) {
+        const serverHR = await response.json();
+        if (Array.isArray(serverHR) && serverHR.length > 0) {
+          setPatientData(prev => ({
+            ...prev,
+            biometrics: {
+              ...prev.biometrics,
+              heartRateSeries: serverHR
+            }
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching HR from server:', error);
+    }
+  };
+
   const fetchMessages = async () => {
     try {
       const response = await fetch('/api/get-messages');
@@ -74,6 +94,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     fetchLogs();
+    fetchHR();
     fetchMessages();
 
     // WebSocket for real-time updates with reconnection logic
@@ -175,6 +196,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ...prev,
               logs: updatedLogs
             }));
+          } else if (message.type === 'HR_UPDATED') {
+            const updatedHR = message.data;
+            console.log('Heart rate updated from server:', updatedHR);
+            setPatientData(prev => ({
+              ...prev,
+              biometrics: {
+                ...prev.biometrics,
+                heartRateSeries: updatedHR
+              }
+            }));
           } else if (message.type === 'NEW_MESSAGE') {
             const newMessage = message.data;
             setMessages(prev => {
@@ -245,54 +276,59 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       riskLevel
     };
     
-    // Generate a randomized heart rate point for this log
-    const baseBpm = riskLevel === 'High' ? 135 : 72; // Increased high BPM for better visibility
-    const variance = riskLevel === 'High' ? 15 : 8;
-    const newBpm = Math.floor(baseBpm + (Math.random() * variance * 2) - variance);
-    
-    const newHeartRatePoint = {
+    // Generate a full 24-hour heart rate series for this date
+    const baselinePoints = [
+      "12:00 AM", "02:00 AM", "04:00 AM", "06:00 AM", "08:00 AM", "10:00 AM", 
+      "12:00 PM", "02:00 PM", "04:00 PM", "06:00 PM", "08:00 PM", "10:00 PM"
+    ].map(time => ({
+      time,
+      bpm: 70 + Math.floor(Math.random() * 10), // Random baseline 70-80
+      date: dateStr
+    }));
+
+    // Add the actual log point as a peak if high risk
+    const logPoint = {
       time: timeStr,
-      bpm: newBpm,
+      bpm: riskLevel === 'High' ? 135 : 72,
       date: dateStr
     };
+
+    const newHRSeries = [...baselinePoints, logPoint];
 
     // Update local state
     setPatientData(prev => {
       const updatedLogs = [newLog, ...prev.logs];
-      const updatedHeartRateSeries = [...prev.biometrics.heartRateSeries, newHeartRatePoint];
-      
-      // Keep only last 24 points for the series to prevent bloat
-      const trimmedSeries = updatedHeartRateSeries.slice(-24);
+      const updatedHeartRateSeries = [...prev.biometrics.heartRateSeries, ...newHRSeries];
       
       return {
         ...prev,
         logs: updatedLogs,
         biometrics: {
           ...prev.biometrics,
-          heartRate: newBpm, // Update current heart rate to the latest reading
-          heartRateSeries: trimmedSeries,
+          heartRate: logPoint.bpm,
+          heartRateSeries: updatedHeartRateSeries,
           lastSync: 'Just now'
         }
       };
     });
 
-    // Save to server-side JSON file
+    // Save to server-side JSON files
     try {
-      const response = await fetch('/api/save-log', {
+      // Save log
+      await fetch('/api/save-log', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLog),
       });
       
-      if (!response.ok) {
-        console.error('Failed to save log to server');
-      } else {
-        console.log('Log saved to server successfully');
-      }
+      // Save heart rate series
+      await fetch('/api/save-heart-rate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newHRSeries),
+      });
     } catch (error) {
-      console.error('Error saving log to server:', error);
+      console.error('Error saving data to server:', error);
     }
   };
 
