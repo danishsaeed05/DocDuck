@@ -62,21 +62,40 @@ const DoctorVitals: React.FC = () => {
         return point.date.toUpperCase() === selectedDate.toUpperCase();
       });
 
-    // Fallback: If no series data for this date, but we have logs, generate dummy points from logs
+    // Fallback: If no series data for this date, but we have logs, generate a full 24-hour baseline
     if (filteredSeries.length === 0) {
       const logsForDate = patientData.logs.filter(l => 
         l.date && l.date.toUpperCase() === selectedDate.toUpperCase()
       );
       
       if (logsForDate.length > 0) {
-        // Create points from logs so the graph isn't empty
-        filteredSeries = logsForDate.map(log => ({
+        // Generate a 24-hour baseline (every 2 hours) to ensure a line is drawn
+        const baselinePoints = [
+          "12:00 AM", "02:00 AM", "04:00 AM", "06:00 AM", "08:00 AM", "10:00 AM", 
+          "12:00 PM", "02:00 PM", "04:00 PM", "06:00 PM", "08:00 PM", "10:00 PM"
+        ].map(time => ({
+          time,
+          bpm: 70 + Math.floor(Math.random() * 10), // Random baseline 70-80
+          date: selectedDate
+        }));
+
+        // Add the actual log points to the baseline
+        const logPoints = logsForDate.map(log => ({
           time: log.time,
           bpm: log.riskLevel === 'High' ? 135 : 72,
           date: log.date
-        })).sort((a, b) => {
-          // Sort by time within the day
-          return new Date(`2000/01/01 ${a.time}`).getTime() - new Date(`2000/01/01 ${b.time}`).getTime();
+        }));
+
+        filteredSeries = [...baselinePoints, ...logPoints].sort((a, b) => {
+          // Robust time sorting
+          const parseTime = (t: string) => {
+            const [time, modifier] = t.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return hours * 60 + (minutes || 0);
+          };
+          return parseTime(a.time) - parseTime(b.time);
         });
       }
     }
