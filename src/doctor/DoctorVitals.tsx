@@ -231,9 +231,9 @@ const DoctorVitals: React.FC = () => {
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg border-4 border-surface-container">
             <img 
-              alt="Maya Wayne Patient Profile" 
+              alt="John Smith Patient Profile" 
               className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd7h0o3Sggo9WVG3zwjSpsVdcZCw_Ehobm5Sjj3xe3JeDcUtpKxCAhGclnZxbIHL3pVVke8Nq357fyrcaHPFbj_6lL-qdZy4B2Qcx4bJBLoa9JUJMwa3H7k7d9DZm479SeB7rsVtZwLMHHlKM3r3z0ucOy3iVNWIU_tFDCBXaVBXf6oJrc4t16_movQOQ_uE8JagX-Ahw_2Hu-Rai6QaWrU2m5-mnbPoCVjb8kFyHu_9Q4tJ_I-Gl_PW-EUugHZoJ0-wBld2vJsMY" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiAZ72D8XCrYXykxTtm_efgbGgr07pyU5J3U4_K6N-filusOZB6ELKG-oSLVUHldF0g69z5tO2-q0GNJtZcuJNba7DZQKsGcbzub7n82iqUfwzlDy-JT4uk4AJmZckuvM6cuMqN5H5U-OcOgWF-2GXQDiRwxLWv3SDBjJogI9uLX4SlVk2dudjRrFLrzIrL0SH137WuojLUouxKwRW2qTOfMcxz3te86vWayG6vx0zOms4I-rOpHdZivJlAOuAAB6kvIhHkwvxNZ8" 
             />
           </div>
           <div>
@@ -268,9 +268,9 @@ const DoctorVitals: React.FC = () => {
           <div className="p-2 space-y-1">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-surface-container-lowest border-l-4 border-tertiary shadow-sm transition-all">
               <img 
-                alt="Maya Wayne Small" 
+                alt="John Smith Small" 
                 className="w-10 h-10 rounded-full object-cover" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd7h0o3Sggo9WVG3zwjSpsVdcZCw_Ehobm5Sjj3xe3JeDcUtpKxCAhGclnZxbIHL3pVVke8Nq357fyrcaHPFbj_6lL-qdZy4B2Qcx4bJBLoa9JUJMwa3H7k7d9DZm479SeB7rsVtZwLMHHlKM3r3z0ucOy3iVNWIU_tFDCBXaVBXf6oJrc4t16_movQOQ_uE8JagX-Ahw_2Hu-Rai6QaWrU2m5-mnbPoCVjb8kFyHu_9Q4tJ_I-Gl_PW-EUugHZoJ0-wBld2vJsMY" 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiAZ72D8XCrYXykxTtm_efgbGgr07pyU5J3U4_K6N-filusOZB6ELKG-oSLVUHldF0g69z5tO2-q0GNJtZcuJNba7DZQKsGcbzub7n82iqUfwzlDy-JT4uk4AJmZckuvM6cuMqN5H5U-OcOgWF-2GXQDiRwxLWv3SDBjJogI9uLX4SlVk2dudjRrFLrzIrL0SH137WuojLUouxKwRW2qTOfMcxz3te86vWayG6vx0zOms4I-rOpHdZivJlAOuAAB6kvIhHkwvxNZ8" 
               />
               <div className="flex-1 overflow-hidden">
                 <p className="text-sm font-bold truncate">{patientData.name}</p>

@@ -2,7 +2,7 @@ import { PatientData } from '../types';
 
 export const initialPatientData: PatientData = {
   id: "CLI-209-88",
-  name: "Maya Wayne",
+  name: "John Smith",
   age: 15,
   dob: "02/14/2011",
   status: "Active",

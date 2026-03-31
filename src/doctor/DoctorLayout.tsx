@@ -220,9 +220,9 @@ const DoctorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             </div>
 
             <img 
-              alt="Maya Wayne Patient Profile" 
+              alt="John Smith Patient Profile" 
               className="w-8 h-8 rounded-full border border-slate-200" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd7h0o3Sggo9WVG3zwjSpsVdcZCw_Ehobm5Sjj3xe3JeDcUtpKxCAhGclnZxbIHL3pVVke8Nq357fyrcaHPFbj_6lL-qdZy4B2Qcx4bJBLoa9JUJMwa3H7k7d9DZm479SeB7rsVtZwLMHHlKM3r3z0ucOy3iVNWIU_tFDCBXaVBXf6oJrc4t16_movQOQ_uE8JagX-Ahw_2Hu-Rai6QaWrU2m5-mnbPoCVjb8kFyHu_9Q4tJ_I-Gl_PW-EUugHZoJ0-wBld2vJsMY" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiAZ72D8XCrYXykxTtm_efgbGgr07pyU5J3U4_K6N-filusOZB6ELKG-oSLVUHldF0g69z5tO2-q0GNJtZcuJNba7DZQKsGcbzub7n82iqUfwzlDy-JT4uk4AJmZckuvM6cuMqN5H5U-OcOgWF-2GXQDiRwxLWv3SDBjJogI9uLX4SlVk2dudjRrFLrzIrL0SH137WuojLUouxKwRW2qTOfMcxz3te86vWayG6vx0zOms4I-rOpHdZivJlAOuAAB6kvIhHkwvxNZ8" 
             />
           </div>
         </header>

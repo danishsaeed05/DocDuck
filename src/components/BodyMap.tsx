@@ -20,80 +20,74 @@ export default function BodyMap() {
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
   const [painDescription, setPainDescription] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const modelBoundsRef = useRef({ min: 0, max: 1.8 });
   const modelViewerRef = useRef<any>(null);
 
   const getBodyPartFromY = (y: number, x: number): string => {
-    const side = x < 0 ? 'Right' : 'Left';
-    const absX = Math.abs(x);
+    const { min, max } = modelBoundsRef.current;
+    const range = max - min;
+    if (range <= 0) return 'Body';
     
-    if (y > 1.62) return 'Head';
-    if (y > 1.52) return 'Neck';
+    const sY = ((y - min) / range) * 1.8;
+    const sX = (x / range) * 1.8;
     
-    if (y > 1.42) {
-      if (absX > 0.12) return `${side} Shoulder`;
+    const side = sX < 0 ? 'Right' : 'Left';
+    const absX = Math.abs(sX);
+    
+    console.log(`Mapping: y=${y.toFixed(3)} (bounds: ${min.toFixed(2)}-${max.toFixed(2)}) -> sY=${sY.toFixed(3)}, x=${x.toFixed(3)} -> sX=${sX.toFixed(3)} (${side})`);
+
+    if (sY > 1.68) return 'Head';
+    if (sY > 1.58) return 'Neck';
+    
+    if (sY > 1.45) {
+      if (absX > 0.15) return `${side} Shoulder`;
       return 'Upper Chest';
     }
     
-    if (absX > 0.18) {
-      if (y > 1.15) return `${side} Upper Arm`;
-      if (y > 1.05) return `${side} Elbow`;
-      if (y > 0.85) return `${side} Forearm`;
-      if (y > 0.78) return `${side} Wrist`;
-      if (y > 0.65) return `${side} Hand`;
+    if (absX > 0.22) {
+      if (sY > 1.15) return `${side} Upper Arm`;
+      if (sY > 1.00) return `${side} Elbow`;
+      if (sY > 0.80) return `${side} Forearm`;
+      if (sY > 0.70) return `${side} Wrist`;
+      if (sY > 0.55) return `${side} Hand`;
     }
 
-    if (y > 1.20) return 'Chest';
-    if (y > 1.00) return 'Abdomen';
-    if (y > 0.85) return 'Lower Abdomen / Pelvis';
-    if (y > 0.72) return `${side} Hip`;
+    if (sY > 1.25) return 'Chest';
+    if (sY > 1.05) return 'Abdomen';
+    if (sY > 0.85) return 'Lower Abdomen / Pelvis';
+    if (sY > 0.72) return `${side} Hip`;
     
-    if (y > 0.45) return `${side} Thigh`;
-    if (y > 0.35) return `${side} Knee`;
-    if (y > 0.08) return `${side} Calf`;
+    if (sY > 0.42) return `${side} Thigh`;
+    if (sY > 0.30) return `${side} Knee`;
+    if (sY > 0.10) return `${side} Calf`;
     
     return `${side} Foot`;
   };
 
-  useEffect(() => {
-    console.log('Selected Parts updated:', selectedParts);
-  }, [selectedParts]);
-
   const handleModelClick = (event: { clientX: number, clientY: number, target?: any, isManual?: boolean }) => {
     const viewer = modelViewerRef.current;
     
-    if (!viewer) {
-      console.log('Hit test aborted: Viewer ref is null');
-      return;
-    }
+    if (!viewer) return;
 
     const rect = viewer.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    console.log(`Click at px: ${Math.round(x)}, ${Math.round(y)} on viewer ${Math.round(rect.width)}x${Math.round(rect.height)}`);
-
-    // Check if we clicked a hotspot button (to avoid placing a new marker on top of an old one)
+    // Check if we clicked a hotspot button
     if (!event.isManual) {
       const target = event.target as HTMLElement;
       if (target && target.closest('button[slot^="hotspot-"]')) {
-        console.log('Clicked existing hotspot, skipping new marker');
         return;
       }
     }
 
-    if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
-      console.log('Click outside viewer bounds');
-      return;
-    }
+    if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
 
     try {
       let hit = null;
       
-      // Only try 3D hit test if viewer is loaded and has the method
       if (viewer.loaded && typeof viewer.positionAndNormalFromPoint === 'function') {
         const dpr = window.devicePixelRatio || 1;
-        
-        // Try direct hit
         hit = viewer.positionAndNormalFromPoint(x, y);
         
         if (!hit && dpr !== 1) {
@@ -101,7 +95,7 @@ export default function BodyMap() {
         }
 
         if (!hit) {
-          const offsets = [[2, 0], [-2, 0], [0, 2], [0, -2], [5, 0], [-5, 0]];
+          const offsets = [[2, 0], [-2, 0], [0, 2], [0, -2]];
           for (const [ox, oy] of offsets) {
             hit = viewer.positionAndNormalFromPoint(x + ox, y + oy);
             if (hit) break;
@@ -119,39 +113,29 @@ export default function BodyMap() {
         normX = Number(normal.x);
         normY = Number(normal.y);
         normZ = Number(normal.z);
-        console.log(`3D HIT! Part: ${getBodyPartFromY(posY, posX)} at ${posX.toFixed(3)}, ${posY.toFixed(3)}, ${posZ.toFixed(3)}`);
       } else {
-        // Fallback: Calculate position on the Z=0.1 plane based on screen coordinates
-        // This allows clicking "anywhere" in the 3D space
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        
-        // factor = 2.2 is tuned for 3.5m distance and default FOV
-        const factor = 2.2; 
+        const { min, max } = modelBoundsRef.current;
+        const range = max - min;
+        const modelCenterY = (max + min) / 2;
+        const factor = 1.22 * (range > 0 ? range : 1.8); 
         const aspect = rect.width / rect.height;
         
         const relX = (x - centerX) / rect.width;
         const relY = (centerY - y) / rect.height;
         
-        // Invert relX because in model-viewer's default front view, 
-        // positive screen X (right) corresponds to negative model X (anatomical left)
-        posX = -relX * factor * aspect;
-        posY = relY * factor + 0.9; // 0.9 is the camera target Y
-        posZ = 0.1; // Slightly in front of the center plane
+        posX = relX * factor * aspect;
+        posY = relY * factor + modelCenterY; 
+        posZ = 0.1 * (range > 0 ? (range / 1.8) : 1);
         normX = 0;
         normY = 0;
         normZ = 1;
-        
-        console.log(`FALLBACK HIT! Calculated: ${posX.toFixed(3)}, ${posY.toFixed(3)}, ${posZ.toFixed(3)}`);
       }
 
       const partName = getBodyPartFromY(posY, posX);
       
-      // Check for duplicates
-      if (selectedParts.some(p => p.name === partName)) {
-        console.log(`Duplicate part: ${partName} already selected.`);
-        return;
-      }
+      if (selectedParts.some(p => p.name === partName)) return;
       
       const newPart: SelectedPart = {
         id: `part-${Date.now()}`,
@@ -173,17 +157,34 @@ export default function BodyMap() {
     const viewer = modelViewerRef.current;
     
     const handleLoad = () => {
-      console.log('Model loaded successfully');
       if (viewer) {
-        viewer.cameraTarget = "0m 0.9m 0m";
-        viewer.cameraOrbit = "0deg 90deg 3.5m";
+        const dimensions = viewer.getDimensions();
+        const target = viewer.getCameraTarget();
+        
+        if (dimensions && dimensions.y > 0 && target) {
+          const height = dimensions.y;
+          const minY = target.y - height / 2;
+          const maxY = target.y + height / 2;
+          modelBoundsRef.current = { min: minY, max: maxY };
+          console.log(`Bounds set: ${minY.toFixed(2)} to ${maxY.toFixed(2)}`);
+        }
+
+        // Change model color to a soft blue-gray
+        const model = viewer.model;
+        if (model && model.materials) {
+          for (const material of model.materials) {
+            // Set color to a soft blue-gray [R, G, B, A]
+            material.pbrMetallicRoughness.setBaseColorFactor([0.53, 0.6, 0.67, 1.0]);
+          }
+        }
+
+        viewer.cameraTarget = "auto auto auto";
+        viewer.cameraOrbit = "auto 90deg auto";
       }
     };
 
-    // Ensure model-viewer is upgraded if it's a plain HTMLElement
     customElements.whenDefined('model-viewer').then(() => {
       if (viewer && viewer.constructor.name === 'HTMLElement') {
-        console.log('Upgrading model-viewer element...');
         customElements.upgrade(viewer);
       }
     });
@@ -201,16 +202,10 @@ export default function BodyMap() {
       const diffX = Math.abs(e.clientX - startX);
       const diffY = Math.abs(e.clientY - startY);
 
-      // If moved less than 10px, it's a click/tap
       if (diffX < 10 && diffY < 10) {
         const rect = viewer.getBoundingClientRect();
-        
-        if (
-          e.clientX >= rect.left &&
-          e.clientX <= rect.right &&
-          e.clientY >= rect.top &&
-          e.clientY <= rect.bottom
-        ) {
+        if (e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
           handleModelClick(e);
         }
       }
@@ -275,10 +270,10 @@ export default function BodyMap() {
               disable-pan
               loading="eager"
               reveal="auto"
-              camera-target="0m 0.9m 0m"
-              camera-orbit="0deg 90deg 3.5m"
-              min-camera-orbit="auto 90deg 3.5m"
-              max-camera-orbit="auto 90deg 3.5m"
+              camera-target="auto auto auto"
+              camera-orbit="auto 90deg auto"
+              min-camera-orbit="auto 90deg auto"
+              max-camera-orbit="auto 90deg auto"
               interaction-prompt="none"
               shadow-intensity="0"
               environment-image="neutral"

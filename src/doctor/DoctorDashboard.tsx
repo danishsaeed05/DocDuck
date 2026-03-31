@@ -52,9 +52,9 @@ const DoctorDashboard: React.FC = () => {
         <div className="flex items-center gap-6">
           <div className="relative">
             <img 
-              alt="Maya Wayne Profile" 
+              alt="John Smith Profile" 
               className="w-24 h-24 rounded-2xl object-cover shadow-sm" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd7h0o3Sggo9WVG3zwjSpsVdcZCw_Ehobm5Sjj3xe3JeDcUtpKxCAhGclnZxbIHL3pVVke8Nq357fyrcaHPFbj_6lL-qdZy4B2Qcx4bJBLoa9JUJMwa3H7k7d9DZm479SeB7rsVtZwLMHHlKM3r3z0ucOy3iVNWIU_tFDCBXaVBXf6oJrc4t16_movQOQ_uE8JagX-Ahw_2Hu-Rai6QaWrU2m5-mnbPoCVjb8kFyHu_9Q4tJ_I-Gl_PW-EUugHZoJ0-wBld2vJsMY" 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiAZ72D8XCrYXykxTtm_efgbGgr07pyU5J3U4_K6N-filusOZB6ELKG-oSLVUHldF0g69z5tO2-q0GNJtZcuJNba7DZQKsGcbzub7n82iqUfwzlDy-JT4uk4AJmZckuvM6cuMqN5H5U-OcOgWF-2GXQDiRwxLWv3SDBjJogI9uLX4SlVk2dudjRrFLrzIrL0SH137WuojLUouxKwRW2qTOfMcxz3te86vWayG6vx0zOms4I-rOpHdZivJlAOuAAB6kvIhHkwvxNZ8" 
             />
             {hasSevereRecent && (
               <div className="absolute -top-2 -right-2 bg-error text-white p-1.5 rounded-lg shadow-md flex items-center justify-center animate-bounce" title="Severe Risk Flag">
@@ -132,7 +132,7 @@ const DoctorDashboard: React.FC = () => {
               />
               <div className="flex gap-3">
                 <button 
-                  onClick={() => setMessageText("Hi Maya, I've reviewed your recent logs. Let's schedule a quick video consult to discuss the heart rate spikes.")}
+                  onClick={() => setMessageText("Hi John, I've reviewed your recent logs. Let's schedule a quick video consult to discuss the heart rate spikes.")}
                   className="text-[10px] font-bold uppercase tracking-widest text-secondary bg-secondary/10 px-3 py-1.5 rounded-lg hover:bg-secondary/20 transition-colors"
                 >
                   Use Template
